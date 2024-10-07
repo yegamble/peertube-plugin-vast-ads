@@ -44,6 +44,8 @@
     "dist",
     "assets",
     "public",
+    "languages",
+    "lib",
     "main.js"
   ],
   "translations": {},
