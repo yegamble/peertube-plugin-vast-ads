@@ -1,0 +1,55 @@
+{
+  "name": "peertube-plugin-vast-ads",
+  "description": "Display vast ads in peertube",
+  "version": "1.0.0",
+  "license": "BSD-3-Clause",
+  "author": "Ignacio Aguirre",
+  "bugs": "https://github.com/nachoaguirre/peertube-plugin-vast-ads/issues",
+  "homepage": "https://github.com/nachoaguirre/peertube-plugin-vast-ads",
+  "keywords": [
+    "peertube",
+    "plugin",
+    "vast",
+    "ads"
+  ],
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "node ./scripts/build.js"
+  },
+  "clientScripts": [
+    {
+      "script": "dist/video-watch-client-plugin.js",
+      "scopes": [
+        "video-watch"
+      ]
+    },
+    {
+      "script": "dist/embed-client-plugin.js",
+      "scopes": [
+        "embed"
+      ]
+    }
+  ],
+  "css": [
+    "assets/style.css"
+  ],
+  "engine": {
+    "peertube": ">=3.0.0"
+  },
+  "library": "./main.js",
+  "staticDirs": {
+    "scripts": "public/scripts"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "public",
+    "main.js"
+  ],
+  "translations": {},
+  "devDependencies": {
+    "esbuild": "^0.14.36",
+    "esbuild-plugin-external-global": "^1.0.1",
+    "global": "^4.4.0"
+  }
+}
