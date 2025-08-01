@@ -20,11 +20,16 @@ async function init (registerHook, peertubeHelpers) {
 
   const pluginSettings = settings(s);
   const rollsStatus = getRollsStatus(pluginSettings);
+  const getShouldShowAds = () => {
+    const lastAd = parseInt(localStorage.getItem('vastLastAdTimestamp') || '0', 10);
+    const coolOffMs = Number(pluginSettings.coolOffMinutes) * 60 * 1000;
+    return rollsStatus.hasAtLeastOneRollEnabled && (!coolOffMs || Date.now() - lastAd >= coolOffMs);
+  }
 
   registerHook({
     target: 'filter:internal.video-watch.player.load-options.result',
     handler: (result) => {
-      if (rollsStatus.hasAtLeastOneRollEnabled) {
+      if (getShouldShowAds()) {
         result.autoplay = false;
       }
 
@@ -35,7 +40,7 @@ async function init (registerHook, peertubeHelpers) {
   registerHook({
     target: 'action:video-watch.player.loaded',
     handler: async ({ videojs, player, video }) => {
-      if (!rollsStatus.hasAtLeastOneRollEnabled) return;
+      if (!getShouldShowAds()) return;
 
       window.videojs = videojs;
       window.player = player;
@@ -45,6 +50,7 @@ async function init (registerHook, peertubeHelpers) {
       try {
         const vastSettings = createVastSettings(pluginSettings);
         await buildVastPlayer(vastSettings, player);
+        localStorage.setItem('vastLastAdTimestamp', Date.now().toString());
       } catch (error) {
         console.error('[VAST PLUGIN] Error:', error);
       }

@@ -2788,8 +2788,9 @@ var require_videojsx_vast = __commonJS({
 var DEFAULT_SKIP_TIME = 8;
 var DEFAULT_SKIP_COUNTDOWN_MESSAGE = "Skip in {seconds}...";
 var DEFAULT_SKIP_MESSAGE = "Skip";
+var DEFAULT_COOLOFF_MINUTES = 5;
 var settings = (s) => {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   return {
     preroll: {
       enabled: (_a = s["vast-preroll-enabled"]) != null ? _a : false,
@@ -2809,7 +2810,8 @@ var settings = (s) => {
     skipTime: (_g = s["vast-skip-time"]) != null ? _g : DEFAULT_SKIP_TIME,
     messageSkipCountdown: (_h = s["vast-message-skip-countdown"]) != null ? _h : DEFAULT_SKIP_COUNTDOWN_MESSAGE,
     messageSkip: (_i = s["vast-message-skip"]) != null ? _i : DEFAULT_SKIP_MESSAGE,
-    messageRemainingTime: s["vast-message-remainingTime"]
+    messageRemainingTime: s["vast-message-remainingTime"],
+    coolOffMinutes: (_j = s["vast-cooloff-minutes"]) != null ? _j : DEFAULT_COOLOFF_MINUTES
   };
 };
 var loadContribAds = async (player) => {
@@ -2891,10 +2893,15 @@ async function init(registerHook, peertubeHelpers) {
   }
   const pluginSettings = settings(s);
   const rollsStatus = getRollsStatus(pluginSettings);
+  const getShouldShowAds = () => {
+    const lastAd = parseInt(localStorage.getItem("vastLastAdTimestamp") || "0", 10);
+    const coolOffMs = Number(pluginSettings.coolOffMinutes) * 60 * 1e3;
+    return rollsStatus.hasAtLeastOneRollEnabled && (!coolOffMs || Date.now() - lastAd >= coolOffMs);
+  };
   registerHook({
     target: "filter:internal.video-watch.player.load-options.result",
     handler: (result) => {
-      if (rollsStatus.hasAtLeastOneRollEnabled) {
+      if (getShouldShowAds()) {
         result.autoplay = false;
       }
       return result;
@@ -2903,7 +2910,7 @@ async function init(registerHook, peertubeHelpers) {
   registerHook({
     target: "action:video-watch.player.loaded",
     handler: async ({ videojs: videojs2, player, video }) => {
-      if (!rollsStatus.hasAtLeastOneRollEnabled)
+      if (!getShouldShowAds())
         return;
       window.videojs = videojs2;
       window.player = player;
@@ -2911,6 +2918,7 @@ async function init(registerHook, peertubeHelpers) {
       try {
         const vastSettings = createVastSettings(pluginSettings);
         await buildVastPlayer(vastSettings, player);
+        localStorage.setItem("vastLastAdTimestamp", Date.now().toString());
       } catch (error) {
         console.error("[VAST PLUGIN] Error:", error);
       }

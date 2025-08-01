@@ -16,3 +16,7 @@ Local example:
 
 ## Update Plugin en Peertube after each new build
 ```peertube-cli plugins update --path /absolute/path/to/peertube-plugin-vast-ads```
+
+## Cool off period between ads
+
+From version next, the plugin keeps track of the last time an ad was displayed in the browser. You can configure the delay between ads with the **Ads cool off time (minutes)** setting (default is 5 minutes). When the user opens a new video before this delay has expired, no preroll, midroll or postroll ads will be shown.
