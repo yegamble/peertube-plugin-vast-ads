@@ -23,19 +23,22 @@ function register ({ registerHook, peertubeHelpers }) {
 
       await initializationPromise;
 
-      if(!pluginSettings.embededEnabled) {
+      const lastAd = parseInt(localStorage.getItem('vastLastAdTimestamp') || '0', 10);
+      const coolOffMs = Number(pluginSettings.coolOffMinutes) * 60 * 1000;
+      const shouldShowAds = rollsStatus.hasAtLeastOneRollEnabled && (!coolOffMs || Date.now() - lastAd >= coolOffMs);
+
+      if(!pluginSettings.embededEnabled || !shouldShowAds) {
         player.trigger('nopreroll');
         player.trigger('nopostroll');
         return;
       }
 
-      if (rollsStatus.hasAtLeastOneRollEnabled) {
-        try {
-          const vastSettings = createVastSettings(pluginSettings);
-          await buildVastPlayer(vastSettings, player);
-        } catch (error) {
-          console.error('[VAST PLUGIN] Error:', error);
-        }
+      try {
+        const vastSettings = createVastSettings(pluginSettings);
+        await buildVastPlayer(vastSettings, player);
+        localStorage.setItem('vastLastAdTimestamp', Date.now().toString());
+      } catch (error) {
+        console.error('[VAST PLUGIN] Error:', error);
       }
     }
   });
